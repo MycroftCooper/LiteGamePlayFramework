@@ -1,1 +1,1 @@
-# LiteQuickGamePlayFramework
+# LiteGamePlayFramework
