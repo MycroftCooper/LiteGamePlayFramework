@@ -22,11 +22,10 @@ namespace LitePlayQuickFramework.UI.RedDotSystem {
             Instance = this;
             DontDestroyOnLoad(gameObject);
             _redDotTree = new RedDotTree();
-            _redDotTree.Init();
         }
         
         #region 数据源相关
-        private readonly Dictionary<string, IRedDotDataSource> _redDotDataSourceDict = new Dictionary<string, IRedDotDataSource>();
+        private readonly Dictionary<string, IRedDotDataSource> _redDotDataSourceDict = new();
         
         public void BindRedDotDataSource(IRedDotDataSource redDotDataSource) {
             if (redDotDataSource == null) {
@@ -71,7 +70,7 @@ namespace LitePlayQuickFramework.UI.RedDotSystem {
         #endregion
 
         #region UI相关
-        private readonly Dictionary<string, IRedDotUI> _redDotUIDict = new Dictionary<string, IRedDotUI>();
+        private readonly Dictionary<string, IRedDotUI> _redDotUIDict = new();
         
         public void BindAllRedDotUI(GameObject rootObject) {
             if (rootObject == null) {

@@ -62,10 +62,10 @@ namespace LitePlayQuickFramework.UI.RedDotSystem {
     }
     
     public class RedDotTree {
-        private RedDotNode _root;
-        private readonly Dictionary<string, RedDotNode> _nodes = new Dictionary<string, RedDotNode>();
+        private readonly RedDotNode _root;
+        private readonly Dictionary<string, RedDotNode> _nodes = new();
 
-        public void Init() {
+        public RedDotTree() {
             _root = new RedDotNode("Root");
             _nodes.Add("Root", _root);
         }
@@ -78,7 +78,6 @@ namespace LitePlayQuickFramework.UI.RedDotSystem {
         
         public bool Contains(string key) => _nodes.ContainsKey(key);
         public bool TryGetNode(string key, out RedDotNode node) => _nodes.TryGetValue(key, out node);
-        public RedDotNode GetNode(string key) => _nodes.GetValueOrDefault(key);
         
         public RedDotNode AddNode(string key, int selfDotCount = 0) {
             if (_nodes.TryGetValue(key, out var node)) {
