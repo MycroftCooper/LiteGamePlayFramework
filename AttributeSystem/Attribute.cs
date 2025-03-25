@@ -14,13 +14,13 @@ namespace LitePlayQuickFramework.AttributeSystem {
         public float BaseValue => baseValue;
         public float FinalValue { get; private set; }
         public int RoundedFinalValue { get; private set; }
-        public CalculateTypes calculateType;
+        public readonly CalculateTypes CalculateType = CalculateTypes.AddThenMultiply;
         public bool HasClamp => minValue != null || maxValue != null;
-        [SerializeField] internal Attribute maxValue;
-        [SerializeField] internal Attribute minValue;
+        [SerializeField] public Attribute maxValue;
+        [SerializeField] public Attribute minValue;
         
         public bool IsLocked => Modifiers.Any(m => m.Type == ModifierTypes.Locked);
-        internal List<AttributeModifier> Modifiers = new List<AttributeModifier>();
+        public List<AttributeModifier> Modifiers = new List<AttributeModifier>();
         public Func<AttributeModifier, bool, bool> CanModifierChange;
         public Action<AttributeChangedInfo> OnValueChanged;
         
@@ -30,7 +30,6 @@ namespace LitePlayQuickFramework.AttributeSystem {
             if (string.IsNullOrEmpty(name)) {
                 Debug.LogWarning("[Attribute] name is empty!");
             }
-
             CalculateFinalValue();
         }
         
@@ -116,7 +115,7 @@ namespace LitePlayQuickFramework.AttributeSystem {
             OnValueChanged?.Invoke(info);
         }
 
-        internal void CalculateFinalValue() {
+        public void CalculateFinalValue() {
             // 检查Reset类型的Modifier
             if (Modifiers.Any(m => m.Type == ModifierTypes.Reset)) {
                 FinalValue = baseValue;

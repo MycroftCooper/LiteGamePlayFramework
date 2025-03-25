@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace LitePlayQuickFramework.AttributeSystem {
     public class AttributeManager : MonoBehaviour {
-        public virtual string Owner { get; internal set; }
-        internal Dictionary<string, Attribute> Attributes = new Dictionary<string, Attribute>();
+        public virtual string Owner { get; set; }
+        public Dictionary<string, Attribute> Attributes = new Dictionary<string, Attribute>();
         
         protected virtual void Awake() {
             RegisterAttributes(); // 自动注册

@@ -6,7 +6,7 @@ namespace LitePlayQuickFramework.AttributeSystem {
 
     public static class AttributeValueCalculator {
         public static float CalculateFinalValue(Attribute a) {
-            switch (a.calculateType) {
+            switch (a.CalculateType) {
                 case CalculateTypes.AddThenMultiply:
                     return AddThenMultiply(a);
                 default:
