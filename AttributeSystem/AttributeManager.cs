@@ -1,37 +1,31 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
 
 namespace LitePlayQuickFramework.AttributeSystem {
     public class AttributeManager : MonoBehaviour {
+        public string owner;
+        public bool initByPrefabConfig;
+        public List<AttributePrefabConfig> attributePrefabConfigs = new List<AttributePrefabConfig>();
+        
         public virtual string Owner { get; set; }
         public Dictionary<string, Attribute> Attributes = new Dictionary<string, Attribute>();
         
-        protected virtual void Awake() {
-            RegisterAttributes(); // 自动注册
+        private void Awake() {
+            Init();
         }
         
-        protected virtual void RegisterAttributes() {
-            var fields = GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            foreach (var field in fields) {
-                if (field.FieldType != typeof(Attribute)) continue;
-                if (field.GetValue(this) is not Attribute attribute) continue;
-                attribute.Owner = Owner;
-                AddAttribute(attribute);
+        public void Init() {
+            if (initByPrefabConfig) {
+                var list = AttributeFactory.LoadPrefabData(owner, attributePrefabConfigs);
+                foreach (var attribute in list) {
+                    Attributes.Add(attribute.Name, attribute);
+                }
             }
+        }
+
+        private void InitByPrefabConfig() {
             
-            foreach (var attr in Attributes.Values) {
-                // 检查 Min 和 Max 是否存在，并建立关系
-                if (Attributes.TryGetValue($"Min{attr.Name}", out var minAttr)) {
-                    attr.minValue = minAttr;
-                }
-                if (Attributes.TryGetValue($"Max{attr.Name}", out var maxAttr)) {
-                    attr.maxValue = maxAttr;
-                }
-                // 重新计算值，确保 Clamp 正确
-                attr.CalculateFinalValue();
-            }
         }
 
         internal void AddAttribute(Attribute attribute) {

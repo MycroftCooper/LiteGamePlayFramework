@@ -5,19 +5,18 @@ using System.Text;
 using UnityEngine;
 
 namespace LitePlayQuickFramework.AttributeSystem {
-    [Serializable]
     public class Attribute {
         public string Owner { get; internal set; }
         public readonly string Name;
-        [SerializeField] private float baseValue;
         
-        public float BaseValue => baseValue;
+        public float BaseValue { get; }
         public float FinalValue { get; private set; }
         public int RoundedFinalValue { get; private set; }
         public readonly CalculateTypes CalculateType = CalculateTypes.AddThenMultiply;
-        public bool HasClamp => minValue != null || maxValue != null;
-        [SerializeField] public Attribute maxValue;
-        [SerializeField] public Attribute minValue;
+        
+        public bool HasClamp => MinValue != null || MaxValue != null;
+        public Attribute MaxValue;
+        public Attribute MinValue;
         
         public bool IsLocked => Modifiers.Any(m => m.Type == ModifierTypes.Locked);
         public List<AttributeModifier> Modifiers = new List<AttributeModifier>();
@@ -36,9 +35,9 @@ namespace LitePlayQuickFramework.AttributeSystem {
         public Attribute(string name, string owner = null, float baseValue = 0, Attribute min = null, Attribute max = null) {
             Owner = owner;
             Name = name;
-            this.baseValue = baseValue;
-            maxValue = max;
-            minValue = min;
+            BaseValue = baseValue;
+            MaxValue = max;
+            MinValue = min;
             if (string.IsNullOrEmpty(owner)) {
                 Debug.LogWarning("[Attribute] owner is empty!");
             }
@@ -118,7 +117,7 @@ namespace LitePlayQuickFramework.AttributeSystem {
         public void CalculateFinalValue() {
             // 检查Reset类型的Modifier
             if (Modifiers.Any(m => m.Type == ModifierTypes.Reset)) {
-                FinalValue = baseValue;
+                FinalValue = BaseValue;
                 Modifiers.Clear();
                 return;
             }
@@ -139,7 +138,7 @@ namespace LitePlayQuickFramework.AttributeSystem {
             foreach (var modifier in Modifiers) {
                 modifiersStr.Append(modifier + "\n");
             }
-            return $"Attribute> Owner:{Owner} Name:{Name} BaseValue:{baseValue} FinalValue:{FinalValue}\n{modifiersStr}";
+            return $"Attribute> Owner:{Owner} Name:{Name} BaseValue:{BaseValue} FinalValue:{FinalValue}\n{modifiersStr}";
         }
     }
 }

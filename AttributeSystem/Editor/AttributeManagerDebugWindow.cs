@@ -140,16 +140,16 @@ namespace LitePlayQuickFramework.AttributeSystem.Editor {
                 // 是Min或Max属性
                 // 需要找到对应的主属性，如果主属性存在，则清除其MinValue或MaxValue引用
                 if (Attributes.TryGetValue(mainAttrName, out Attribute mainAttr) && mainAttr != null) {
-                    if (isMinAttr && mainAttr.minValue != null && mainAttr.minValue.Name == attributeName) {
+                    if (isMinAttr && mainAttr.MinValue != null && mainAttr.MinValue.Name == attributeName) {
                         // 清除主属性的MinValue
-                        mainAttr.minValue = null;
+                        mainAttr.MinValue = null;
                         Debug.Log(
                             $"[AttributeManager] Cleared MinValue of {mainAttrName} since {attributeName} was removed.");
                     }
 
-                    if (isMaxAttr && mainAttr.maxValue != null && mainAttr.maxValue.Name == attributeName) {
+                    if (isMaxAttr && mainAttr.MaxValue != null && mainAttr.MaxValue.Name == attributeName) {
                         // 清除主属性的MaxValue
-                        mainAttr.maxValue = null;
+                        mainAttr.MaxValue = null;
                         Debug.Log(
                             $"[AttributeManager] Cleared MaxValue of {mainAttrName} since {attributeName} was removed.");
                     }
@@ -178,7 +178,7 @@ namespace LitePlayQuickFramework.AttributeSystem.Editor {
         [BoxGroup("SaveData"), HorizontalGroup("SaveData/Row1"), PropertyOrder(5)]
         [Button("Export Save Data")]
         public void ExportSaveData() {
-            var saveData = SelectedManager.ToSaveData();
+            var saveData = AttributeFactory.CreateSaveData(SelectedManager);
             // 将数据转为JSON并打印出来（实际可改为保存到文件）
             string json = JsonUtility.ToJson(saveData, true);
             Debug.Log($"[AttributeManager] Exported Save Data:\n{json}");
@@ -196,7 +196,7 @@ namespace LitePlayQuickFramework.AttributeSystem.Editor {
             try {
                 var saveData = JsonUtility.FromJson<AttributesSaveData>(json);
                 if (saveData != null) {
-                    SelectedManager.LoadSaveData(saveData);
+                    AttributeFactory.LoadSaveData(SelectedManager, saveData);
                     Debug.Log("[AttributeManager] Successfully imported save data from clipboard.");
                 }
                 else {
@@ -232,10 +232,10 @@ namespace LitePlayQuickFramework.AttributeSystem.Editor {
         public float FinalValue => _attribute.FinalValue;
 
         [ShowInInspector, ReadOnly, LabelText("Min"), TableColumnWidth(80)]
-        public float Min => _attribute.minValue?.FinalValue ?? float.MinValue;
+        public float Min => _attribute.MinValue?.FinalValue ?? float.MinValue;
 
         [ShowInInspector, ReadOnly, LabelText("Max"), TableColumnWidth(80)]
-        public float Max => _attribute.maxValue?.FinalValue ?? float.MaxValue;
+        public float Max => _attribute.MaxValue?.FinalValue ?? float.MaxValue;
 
         [TableList(AlwaysExpanded = true, IsReadOnly = true), PropertyOrder(1)]
         [ShowInInspector, LabelText("Modifiers"), TableColumnWidth(250)]

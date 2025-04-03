@@ -1,146 +1,99 @@
-using LitePlayQuickFramework.AttributeSystem;
-using UnityEditor;
 using UnityEngine;
-using System;
-using System.Linq;
+using UnityEditor;
+using System.Collections.Generic;
 
-namespace LiteGamePlayFramework.AttributeSystem.Editor {
-    // todo:优化编辑器，移除对Odin的依赖
-    
+namespace LitePlayQuickFramework.AttributeSystem.EditorTools {
     [CustomEditor(typeof(AttributeManager), true)]
     public class AttributeManagerEditor : UnityEditor.Editor {
-        private AttributeManager mgr;
-        private Vector2 scroll;
+        private AttributeManager manager;
 
-        private string newAttrName = "Health";
-        private float newAttrBase = 100f;
-        private float newAttrMin = 0f;
-        private float newAttrMax = 999f;
+        // 折叠控制每个属性
+        private readonly Dictionary<string, bool> attributeFoldouts = new();
 
-        private string removeAttrName = "Health";
-        private string removeSource = "TestSource";
-
-        private void OnEnable() {
-            mgr = (AttributeManager)target;
-        }
+        // 添加属性表单数据
+        private string newAttributeName = "";
+        private float newBaseValue;
+        private bool addClamp;
+        private float minClamp;
+        private float maxClamp = 100;
 
         public override void OnInspectorGUI() {
-            DrawDefaultInspector(); // 保留原有字段
-
-            EditorGUILayout.Space(10);
-            EditorGUILayout.LabelField("Attribute Debug Panel", EditorStyles.boldLabel);
-            EditorGUILayout.BeginVertical("box");
-            scroll = EditorGUILayout.BeginScrollView(scroll);
-
-            DrawAttributesSection();
-
-            EditorGUILayout.Space(10);
-            DrawAddAttributeSection();
-            EditorGUILayout.Space(10);
-            DrawRemoveAttributeSection();
-            EditorGUILayout.Space(10);
-            DrawModifierUtilitySection();
-            EditorGUILayout.Space(10);
-            DrawSaveLoadSection();
-
-            EditorGUILayout.EndScrollView();
-            EditorGUILayout.EndVertical();
-        }
-        
-        private void DrawAttributesSection() {
-            if (mgr.Attributes == null || mgr.Attributes.Count == 0) {
-                EditorGUILayout.LabelField("No attributes found.");
+            if (!Application.isPlaying) {
+                DrawDefaultInspector();
                 return;
             }
 
-            foreach (var attr in mgr.Attributes.Values.ToList()) {
-                EditorGUILayout.BeginVertical("helpBox");
-                EditorGUILayout.LabelField($"[ {attr.Name} ]", EditorStyles.boldLabel);
-                EditorGUILayout.LabelField($"Base: {attr.BaseValue}, Final: {attr.FinalValue:F2}, Clamp: [{attr.minValue?.FinalValue}, {attr.maxValue?.FinalValue}]");
+            manager = (AttributeManager)target;
 
-                if (attr.Modifiers.Count > 0) {
-                    EditorGUILayout.LabelField("Modifiers:");
-                    foreach (var mod in attr.Modifiers.ToList()) {
-                        EditorGUILayout.BeginHorizontal();
-                        EditorGUILayout.LabelField($"[{mod.Type}] {mod.Source} = {mod.Value}", GUILayout.MaxWidth(300));
-                        if (GUILayout.Button("X", GUILayout.Width(25))) {
-                            attr.RemoveModifier(mod);
-                            GUIUtility.ExitGUI(); // 立即退出当前 GUI 循环避免异常
-                        }
-                        EditorGUILayout.EndHorizontal();
-                    }
-                }
+            EditorGUILayout.Space(10);
+            EditorGUILayout.LabelField("属性管理器调试工具", EditorStyles.boldLabel);
 
-                EditorGUILayout.Space(4);
-                EditorGUILayout.LabelField("Add Modifier:");
-                EditorGUILayout.BeginHorizontal();
-                var type = (ModifierTypes)EditorGUILayout.EnumPopup(ModifierTypes.Add, GUILayout.Width(80));
-                string source = EditorGUILayout.TextField("Source", "", GUILayout.Width(150));
-                float value = EditorGUILayout.FloatField("Value", 0f, GUILayout.Width(100));
-                if (GUILayout.Button("Add", GUILayout.Width(50))) {
-                    attr.AddModifier(new AttributeModifier(type, source, value));
-                }
-                EditorGUILayout.EndHorizontal();
+            DrawAttributeList();
+            DrawAddAttributeForm();
 
-                EditorGUILayout.Space(4);
-                if (GUILayout.Button("Remove Attribute", GUILayout.Width(150))) {
-                    mgr.Attributes.Remove(attr.Name);
-                    mgr.Attributes.Remove("Min" + attr.Name);
-                    mgr.Attributes.Remove("Max" + attr.Name);
-                    GUIUtility.ExitGUI(); // 防止集合变动导致遍历异常
-                }
-
-                EditorGUILayout.EndVertical();
-            }
-        }
-        
-        private void DrawAddAttributeSection() {
-            EditorGUILayout.LabelField("Add New Attribute", EditorStyles.boldLabel);
-            newAttrName = EditorGUILayout.TextField("Name", newAttrName);
-            newAttrBase = EditorGUILayout.FloatField("Base Value", newAttrBase);
-            newAttrMin = EditorGUILayout.FloatField("Min Value", newAttrMin);
-            newAttrMax = EditorGUILayout.FloatField("Max Value", newAttrMax);
-            if (GUILayout.Button("Add Attribute")) {
-                mgr.AddAttribute(newAttrName, newAttrBase, newAttrMin, newAttrMax);
+            if (GUI.changed) {
+                EditorUtility.SetDirty(manager);
             }
         }
 
-        private void DrawRemoveAttributeSection() {
-            EditorGUILayout.LabelField("Remove Attribute (By Name)", EditorStyles.boldLabel);
-            removeAttrName = EditorGUILayout.TextField("Name", removeAttrName);
-            if (GUILayout.Button("Remove Attribute")) {
-                mgr.Attributes.Remove(removeAttrName);
-                mgr.Attributes.Remove("Min" + removeAttrName);
-                mgr.Attributes.Remove("Max" + removeAttrName);
+        private void DrawAttributeList() {
+            if (manager.Attributes == null || manager.Attributes.Count == 0) {
+                EditorGUILayout.HelpBox("当前没有任何属性", MessageType.Info);
+                return;
             }
-        }
-        
-        private void DrawModifierUtilitySection() {
-            EditorGUILayout.LabelField("Remove Modifiers by Source", EditorStyles.boldLabel);
-            removeSource = EditorGUILayout.TextField("Source", removeSource);
-            if (GUILayout.Button("Remove All Modifiers from Source")) {
-                mgr.RemoveModifierBySource(removeSource);
+
+            EditorGUILayout.Space(10);
+            EditorGUILayout.LabelField("属性列表", EditorStyles.boldLabel);
+
+            foreach (var kvp in manager.Attributes) {
+                var attr = kvp.Value;
+
+                attributeFoldouts.TryAdd(attr.Name, false);
+
+                attributeFoldouts[attr.Name] = EditorGUILayout.Foldout(attributeFoldouts[attr.Name], attr.Name);
+
+                if (attributeFoldouts[attr.Name]) {
+                    EditorGUI.indentLevel++;
+                    AttributeEditor.DrawAttribute(attr);
+                    EditorGUI.indentLevel--;
+                }
             }
         }
 
-        private void DrawSaveLoadSection() {
-            EditorGUILayout.LabelField("Save / Load", EditorStyles.boldLabel);
-            if (GUILayout.Button("Export SaveData (Log)")) {
-                var json = JsonUtility.ToJson(mgr.ToSaveData(), true);
-                Debug.Log("[AttributeManager] Exported SaveData:\n" + json);
+        private void DrawAddAttributeForm() {
+            EditorGUILayout.Space(15);
+            EditorGUILayout.LabelField("➕ 添加新属性", EditorStyles.boldLabel);
+
+            newAttributeName = EditorGUILayout.TextField("属性名", newAttributeName);
+            newBaseValue = EditorGUILayout.FloatField("基础值", newBaseValue);
+
+            addClamp = EditorGUILayout.Toggle("添加范围限制 (Clamp)", addClamp);
+            if (addClamp) {
+                minClamp = EditorGUILayout.FloatField("最小值", minClamp);
+                maxClamp = EditorGUILayout.FloatField("最大值", maxClamp);
             }
 
-            if (GUILayout.Button("Import SaveData (From Clipboard)")) {
-                string json = EditorGUIUtility.systemCopyBuffer;
-                try {
-                    var saveData = JsonUtility.FromJson<AttributesSaveData>(json);
-                    mgr.LoadSaveData(saveData);
-                    Debug.Log("[AttributeManager] Imported save data.");
+            GUI.enabled = !string.IsNullOrEmpty(newAttributeName);
+            if (GUILayout.Button("添加属性")) {
+                if (addClamp) {
+                    manager.AddAttribute(newAttributeName, newBaseValue, minClamp, maxClamp);
                 }
-                catch (Exception e) {
-                    Debug.LogError($"Import failed: {e}");
+                else {
+                    manager.AddAttribute(newAttributeName, newBaseValue);
                 }
+
+                // 重置表单
+                newAttributeName = "";
+                newBaseValue = 0;
+                minClamp = 0;
+                maxClamp = 100;
+                addClamp = false;
+
+                // 标记脏
+                EditorUtility.SetDirty(manager);
             }
+
+            GUI.enabled = true;
         }
     }
 }

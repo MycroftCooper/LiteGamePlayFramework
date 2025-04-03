@@ -33,8 +33,8 @@ namespace LitePlayQuickFramework.AttributeSystem {
             float final = (baseVal + sumAdd) * productMul;
 
             if (!a.HasClamp) return final;
-            float minVal = a.minValue?.FinalValue ?? float.MinValue;
-            float maxVal = a.maxValue?.FinalValue ?? float.MaxValue;
+            float minVal = a.MinValue?.FinalValue ?? float.MinValue;
+            float maxVal = a.MaxValue?.FinalValue ?? float.MaxValue;
             final = Mathf.Clamp(final, minVal, maxVal);
             return final;
         }
