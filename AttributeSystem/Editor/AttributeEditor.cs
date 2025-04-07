@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Globalization;
 using UnityEditor;
 using UnityEngine;
@@ -71,53 +72,79 @@ namespace LitePlayQuickFramework.AttributeSystem.EditorTools {
 
     public static class AttributeEditor {
         private static bool _showModifiers = true;
-
-        // 临时添加用的表单数据
-        private static ModifierTypes _newModifierType = ModifierTypes.Add;
-        private static float _newModifierValue;
-        private static string _newModifierSource = "";
-
+        
         public static void DrawAttribute(Attribute attribute) {
             if (attribute == null) return;
 
             EditorGUILayout.BeginVertical("box");
-            EditorGUILayout.LabelField($"属性名: {attribute.Name}", EditorStyles.boldLabel);
-
-            EditorGUILayout.LabelField("基础值", attribute.BaseValue.ToString(CultureInfo.CurrentCulture));
-            EditorGUILayout.LabelField("最终值", attribute.FinalValue.ToString(CultureInfo.CurrentCulture));
-            if (attribute.HasClamp) {
-                EditorGUILayout.LabelField("范围",
-                    $"[{attribute.MinValue?.FinalValue} - {attribute.MaxValue?.FinalValue}]");
-            }
-
-            GUILayout.Space(5);
-            _showModifiers = EditorGUILayout.Foldout(_showModifiers, $"修改器列表 ({attribute.Modifiers.Count})");
+            _showModifiers = EditorGUILayout.Foldout(_showModifiers, $"AttributeModifierList ({attribute.Modifiers.Count})");
             if (_showModifiers) {
-                for (int i = 0; i < attribute.Modifiers.Count; i++) {
-                    var modifier = attribute.Modifiers[i];
-                    AttributeModifierEditor.DrawModifier(modifier, () => { attribute.RemoveModifier(modifier); });
-                }
-
-                GUILayout.Space(8);
-                EditorGUILayout.LabelField("➕ 添加修改器", EditorStyles.boldLabel);
-
-                _newModifierType = (ModifierTypes)EditorGUILayout.EnumPopup("类型", _newModifierType);
-                _newModifierValue = EditorGUILayout.FloatField("数值", _newModifierValue);
-                _newModifierSource = EditorGUILayout.TextField("来源", _newModifierSource);
-
-                if (GUILayout.Button("添加修改器")) {
-                    if (!string.IsNullOrEmpty(_newModifierSource)) {
-                        var newMod = new AttributeModifier(_newModifierType, _newModifierSource, _newModifierValue);
-                        attribute.AddModifier(newMod);
-                        // 重置临时表单
-                        _newModifierValue = 0;
-                        _newModifierSource = "";
-                    }else {
-                        Debug.LogWarning("添加失败：修改器来源不能为空！");
-                    }
-                }
+                DrawAttributeModifierList(attribute);
             }
 
+            EditorGUILayout.EndVertical();
+        }
+
+        private static float _columnWidth;
+        private static GUILayoutOption WidthOption => GUILayout.Width(_columnWidth);
+        
+        private static ModifierTypes _newType = ModifierTypes.Add;
+        private static string _newSource = "";
+        private static float _newValue;
+        
+        public static void DrawAttributeModifierList(Attribute attribute) {
+            List<AttributeModifier> modifiers = attribute.Modifiers;
+            if (modifiers == null) return;
+            
+            _columnWidth = (EditorGUIUtility.currentViewWidth - 60) / 4f; // 减去边距
+
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Label("Type", WidthOption);
+            GUILayout.Label("Source", WidthOption);
+            GUILayout.Label("Value", WidthOption);
+            GUILayout.Label("Remove", WidthOption);
+            EditorGUILayout.EndHorizontal();
+            
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+            
+            foreach (var mod in modifiers) {
+                DrawModifier(mod, () => { attribute.RemoveModifier(mod); });
+            }
+
+            GUILayout.Space(8);
+            EditorGUILayout.LabelField("AddNewModifier:", EditorStyles.boldLabel);
+            EditorGUILayout.BeginHorizontal();
+            _newType = (ModifierTypes)EditorGUILayout.EnumPopup(GUIContent.none, _newType, WidthOption);
+            _newSource = EditorGUILayout.TextField(GUIContent.none, _newSource, WidthOption);
+            _newValue = EditorGUILayout.FloatField(GUIContent.none, _newValue, WidthOption);
+            GUI.enabled = !string.IsNullOrEmpty(_newSource);
+            if (GUILayout.Button("Add", WidthOption)) {
+                attribute.AddModifier(new AttributeModifier(_newType, _newSource, _newValue));
+                _newSource = "";
+                _newValue = 0;
+            }
+            GUI.enabled = true;
+            EditorGUILayout.EndHorizontal();
+        }
+        
+        public static void DrawModifier(AttributeModifier modifier, System.Action onRemove = null) {
+            if (modifier == null) return;
+
+            EditorGUILayout.BeginVertical("box");
+
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Label(modifier.Type.ToString(), WidthOption);
+            GUILayout.Label(modifier.Source, WidthOption);
+            GUILayout.Label(modifier.Value.ToString(CultureInfo.CurrentCulture), WidthOption);
+
+            // 删除按钮在末尾
+            if (onRemove != null) {
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("Remove", WidthOption)) {
+                    onRemove.Invoke();
+                }
+            }
+            EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndVertical();
         }
     }

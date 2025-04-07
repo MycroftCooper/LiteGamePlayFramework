@@ -5,7 +5,7 @@ using System.Text;
 using UnityEngine;
 
 namespace LitePlayQuickFramework.AttributeSystem {
-    public class Attribute {
+    public class   Attribute {
         public string Owner { get; internal set; }
         public readonly string Name;
         
@@ -19,7 +19,7 @@ namespace LitePlayQuickFramework.AttributeSystem {
         public Attribute MinValue;
         
         public bool IsLocked => Modifiers.Any(m => m.Type == ModifierTypes.Locked);
-        public List<AttributeModifier> Modifiers = new List<AttributeModifier>();
+        public List<AttributeModifier> Modifiers = new();
         public Func<AttributeModifier, bool, bool> CanModifierChange;
         public Action<AttributeChangedInfo> OnValueChanged;
         

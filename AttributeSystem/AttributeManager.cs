@@ -28,7 +28,7 @@ namespace LitePlayQuickFramework.AttributeSystem {
             
         }
 
-        internal void AddAttribute(Attribute attribute) {
+        public void AddAttribute(Attribute attribute) {
             if (!Attributes.TryAdd(attribute.Name, attribute)) {
                 Debug.LogError($"Duplicate attribute {attribute.Name}");
             }
